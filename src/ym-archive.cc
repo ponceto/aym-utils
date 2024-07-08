@@ -192,6 +192,44 @@ void Reader::read()
     return ym_read(read_magic());
 }
 
+bool Reader::probe()
+{
+    auto read_magic = [&]() -> uint32_t
+    {
+        uint32_t magic = 0;
+
+        rewind();
+        read_uint32be(magic);
+
+        return magic;
+    };
+
+    auto is_ym = [&](const uint32_t magic) -> bool
+    {
+        if(magic == TAG_YM1) {
+            return true;
+        }
+        if(magic == TAG_YM2) {
+            return true;
+        }
+        if(magic == TAG_YM3) {
+            return true;
+        }
+        if(magic == TAG_YM4) {
+            return true;
+        }
+        if(magic == TAG_YM5) {
+            return true;
+        }
+        if(magic == TAG_YM6) {
+            return true;
+        }
+        return false;
+    };
+
+    return is_ym(read_magic());
+}
+
 }
 
 // ---------------------------------------------------------------------------

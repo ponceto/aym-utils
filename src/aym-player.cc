@@ -177,7 +177,7 @@ void PlayerProcessor::load(const std::string& filename)
 {
     const MutexLock lock(_mutex);
 
-    auto ym_create = [](char* filename)
+    auto ym_create = [](char* filename) -> void
     {
         const int rc = ::mkstemp(filename);
 
@@ -189,7 +189,7 @@ void PlayerProcessor::load(const std::string& filename)
         }
     };
 
-    auto ym_extract = [](const std::string& archive, const std::string& output)
+    auto ym_extract = [](const std::string& archive, const std::string& output) -> void
     {
         lha::Stream stream(archive);
         lha::Reader reader(stream);
@@ -199,14 +199,14 @@ void PlayerProcessor::load(const std::string& filename)
         }
     };
 
-    auto ym_import = [](const std::string& filename, ym::Archive& archive)
+    auto ym_import = [](const std::string& filename, ym::Archive& archive) -> void
     {
         ym::Reader reader(filename, archive);
 
         reader.read();
     };
 
-    auto ym_remove = [](const std::string& filename)
+    auto ym_remove = [](const std::string& filename) -> void
     {
         const int rc = ::unlink(filename.c_str());
 
@@ -215,7 +215,7 @@ void PlayerProcessor::load(const std::string& filename)
         }
     };
 
-    auto ym_finalize = [&]()
+    auto ym_finalize = [&]() -> void
     {
         _music.ticks = 0;
         _music.clock = _archive.header.framerate;
@@ -225,7 +225,19 @@ void PlayerProcessor::load(const std::string& filename)
         _sound.clock = _archive.header.frequency;
     };
 
-    auto ym_load = [&]()
+    auto ym_load_uncompressed = [&]() -> bool
+    {
+        ym::Reader reader(filename, _archive);
+
+        if(reader.probe()) {
+            reader.read();
+            ym_finalize();
+            return true;
+        }
+        return false;
+    };
+
+    auto ym_load_compressed = [&]() -> void
     {
         char extracted[] = "/tmp/aym-player-XXXXXX";
         try {
@@ -241,7 +253,14 @@ void PlayerProcessor::load(const std::string& filename)
         }
     };
 
-    return ym_load();
+    auto try_load = [&]() -> void
+    {
+        if(ym_load_uncompressed() == false) {
+            ym_load_compressed();
+        }
+    };
+
+    return try_load();
 }
 
 }

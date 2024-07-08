@@ -169,6 +169,8 @@ public: // public interface
 
     void read();
 
+    bool probe();
+
 private: // YM private interface
     void ym_read(const uint32_t magic);
 
