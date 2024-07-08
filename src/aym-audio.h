@@ -18,7 +18,6 @@
 #define __AYM_Audio_h__
 
 #include "miniaudio.h"
-#include "aym-emulator.h"
 
 // ---------------------------------------------------------------------------
 // forward declarations

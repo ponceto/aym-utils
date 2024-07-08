@@ -36,89 +36,6 @@
 #include "aym-player.h"
 
 // ---------------------------------------------------------------------------
-// aym::Settings
-// ---------------------------------------------------------------------------
-
-namespace aym {
-
-Settings::Settings()
-    : _chip()
-    , _channels()
-    , _samplerate()
-{
-}
-
-AudioConfig Settings::get()
-{
-    AudioConfig config(ma_device_type_playback);
-
-    config->playback.channels = _channels;
-    config->sampleRate        = _samplerate;
-
-    return config;
-}
-
-}
-
-// ---------------------------------------------------------------------------
-// aym::Playlist
-// ---------------------------------------------------------------------------
-
-namespace aym {
-
-Playlist::Playlist()
-    : _files()
-    , _index()
-{
-}
-
-void Playlist::add(const std::string& filename)
-{
-    _files.push_back(filename);
-}
-
-bool Playlist::get(std::string& filename)
-{
-    const size_t zero = 0;
-    const size_t size = _files.size();
-    const size_t curr = _index;
-
-    if((curr >= zero) && (curr < size)) {
-        filename = _files[curr];
-        return true;
-    }
-    return false;
-}
-
-bool Playlist::prev(std::string& filename)
-{
-    const size_t zero = 0;
-    const size_t size = _files.size();
-    const size_t curr = (_index - 1);
-
-    if((curr >= zero) && (curr < size)) {
-        filename = _files[_index = curr];
-        return true;
-    }
-    return false;
-}
-
-bool Playlist::next(std::string& filename)
-{
-    const size_t zero = 0;
-    const size_t size = _files.size();
-    const size_t curr = (_index + 1);
-
-    if((curr >= zero) && (curr < size)) {
-        filename = _files[_index = curr];
-        return true;
-    }
-    return false;
-}
-
-}
-
-// ---------------------------------------------------------------------------
 // aym::PlayerProcessor
 // ---------------------------------------------------------------------------
 
@@ -338,7 +255,7 @@ namespace aym {
 Player::Player(Settings& settings, Playlist& playlist)
     : _settings(settings)
     , _playlist(playlist)
-    , _device(_settings.get())
+    , _device(_settings.get_config())
     , _processor(_device, _settings)
 {
     _settings.set_channels(_device->playback.channels);

@@ -40,9 +40,9 @@ make
 AYM·Player usage:
 
 ```
-Usage: aym-player.bin [OPTION...] [FILE...]
+Usage: aym-player.bin <command> [OPTION...] [FILE...]
 
-Action:
+Command:
 
     help                display this help
     play                play audio
@@ -76,19 +76,19 @@ Sample-Rate:
 Play the file `commando.ay` with all parameters to default:
 
 ```
-aym-player.bin commando.ay
+aym-player.bin play commando.ay
 ```
 
 Play the file `commando.ay` as a `AY-3-8910`, mono channel, and a sample rate of 11025Hz:
 
 ```
-aym-player.bin ay8910 mono 11025 commando.ay
+aym-player.bin play ay8910 mono 11025 commando.ay
 ```
 
 Play the file `commando.ay` then `gryzor.ay` as a `YM2149`, stereo channels, and a sample rate of 44100Hz:
 
 ```
-aym-player.bin ym2149 stereo 44100 commando.ay gryzor.ay
+aym-player.bin play ym2149 stereo 44100 commando.ay gryzor.ay
 ```
 
 ## LICENSES

@@ -19,96 +19,9 @@
 
 #include "aym-audio.h"
 #include "aym-emulator.h"
+#include "aym-playlist.h"
+#include "aym-settings.h"
 #include "ym-archive.h"
-
-// ---------------------------------------------------------------------------
-// aym::Settings
-// ---------------------------------------------------------------------------
-
-namespace aym {
-
-class Settings
-{
-public: // public interface
-    Settings();
-
-    Settings(const Settings&) = default;
-
-    Settings& operator=(const Settings&) = default;
-
-   ~Settings() = default;
-
-    AudioConfig get();
-
-    auto get_chip() const -> ChipType
-    {
-        return _chip;
-    }
-
-    auto get_channels() const -> uint32_t
-    {
-        return _channels;
-    }
-
-    auto get_samplerate() const -> uint32_t
-    {
-        return _samplerate;
-    }
-
-    auto set_chip(const ChipType chip) -> void
-    {
-        _chip = chip;
-    }
-
-    auto set_channels(const uint32_t channels) -> void
-    {
-        _channels = channels;
-    }
-
-    auto set_samplerate(const uint32_t samplerate) -> void
-    {
-        _samplerate = samplerate;
-    }
-
-private: // private data
-    ChipType _chip;
-    uint32_t _channels;
-    uint32_t _samplerate;
-};
-
-}
-
-// ---------------------------------------------------------------------------
-// aym::Playlist
-// ---------------------------------------------------------------------------
-
-namespace aym {
-
-class Playlist
-{
-public: // public interface
-    Playlist();
-
-    Playlist(const Playlist&) = default;
-
-    Playlist& operator=(const Playlist&) = default;
-
-   ~Playlist() = default;
-
-    void add(const std::string& filename);
-
-    bool get(std::string& filename);
-
-    bool prev(std::string& filename);
-
-    bool next(std::string& filename);
-
-private: // private data
-    std::vector<std::string> _files;
-    size_t                   _index;
-};
-
-}
 
 // ---------------------------------------------------------------------------
 // aym::PlayerProcessor

@@ -65,6 +65,8 @@ aym_player_PROGRAM = aym-player.bin
 aym_player_SOURCES = \
 	miniaudio.c \
 	aym-audio.cc \
+	aym-playlist.cc \
+	aym-settings.cc \
 	aym-emulator.cc \
 	aym-player.cc \
 	lha-stream.cc \
@@ -76,6 +78,8 @@ aym_player_SOURCES = \
 aym_player_HEADERS = \
 	miniaudio.h \
 	aym-audio.h \
+	aym-playlist.h \
+	aym-settings.h \
 	aym-emulator.h \
 	aym-player.h \
 	lha-stream.h \
@@ -87,6 +91,8 @@ aym_player_HEADERS = \
 aym_player_OBJECTS = \
 	miniaudio.o \
 	aym-audio.o \
+	aym-playlist.o \
+	aym-settings.o \
 	aym-emulator.o \
 	aym-player.o \
 	lha-stream.o \

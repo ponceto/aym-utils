@@ -48,7 +48,7 @@ using Player   = aym::Player;
 
 enum Command
 {
-    COMMAND_DFLT = 0,
+    COMMAND_HELP = 0,
     COMMAND_PLAY = 1,
     COMMAND_DUMP = 2,
 };
@@ -59,7 +59,7 @@ enum Command
 
 void Program::main(const ArgList& args)
 {
-    Command  command = COMMAND_DFLT;
+    Command  command = COMMAND_HELP;
     Settings settings;
     Playlist playlist;
 
@@ -75,7 +75,7 @@ void Program::main(const ArgList& args)
 
     auto set_command = [&](const Command cmd) -> void
     {
-        if(command == COMMAND_DFLT) {
+        if(command == COMMAND_HELP) {
             command = cmd;
         }
         else {
@@ -125,6 +125,113 @@ void Program::main(const ArgList& args)
         throw std::runtime_error(what + ' ' + '<' + argument + '>');
     };
 
+    auto arg_command = [&](const int argi, const std::string& arg) -> bool
+    {
+        if(argi == 1) {
+            if(arg == "help") {
+                set_command(Command::COMMAND_HELP);
+                return true;
+            }
+            if(arg == "play") {
+                set_command(Command::COMMAND_PLAY);
+                return true;
+            }
+            if(arg == "dump") {
+                set_command(Command::COMMAND_DUMP);
+                return true;
+            }
+        }
+        return false;
+    };
+
+    auto arg_chip = [&](const int argi, const std::string& arg) -> bool
+    {
+        if(argi >= 2) {
+            if(arg == "ay8910") {
+                set_chip(ChipType::CHIP_AY8910);
+                return true;
+            }
+            if(arg == "ay8912") {
+                set_chip(ChipType::CHIP_AY8912);
+                return true;
+            }
+            if(arg == "ay8913") {
+                set_chip(ChipType::CHIP_AY8913);
+                return true;
+            }
+            if(arg == "ym2149") {
+                set_chip(ChipType::CHIP_YM2149);
+                return true;
+            }
+        }
+        return false;
+    };
+
+    auto arg_channels = [&](const int argi, const std::string& arg) -> bool
+    {
+        if(argi >= 2) {
+            if(arg == "mono") {
+                set_channels(1);
+                return true;
+            }
+            if(arg == "stereo") {
+                set_channels(2);
+                return true;
+            }
+        }
+        return false;
+    };
+
+    auto arg_samplerate = [&](const int argi, const std::string& arg) -> bool
+    {
+        if(argi >= 2) {
+            if(arg == "8000") {
+                set_samplerate(8000);
+                return true;
+            }
+            if(arg == "11025") {
+                set_samplerate(11025);
+                return true;
+            }
+            if(arg == "16000") {
+                set_samplerate(16000);
+                return true;
+            }
+            if(arg == "22050") {
+                set_samplerate(22050);
+                return true;
+            }
+            if(arg == "32000") {
+                set_samplerate(32000);
+                return true;
+            }
+            if(arg == "44100") {
+                set_samplerate(44100);
+                return true;
+            }
+            if(arg == "48000") {
+                set_samplerate(48000);
+                return true;
+            }
+            if(arg == "96000") {
+                set_samplerate(96000);
+                return true;
+            }
+        }
+        return false;
+    };
+
+    auto arg_filename = [&](const int argi, const std::string& arg) -> bool
+    {
+        if(argi >= 2) {
+            if(file_exists(arg)) {
+                add_to_playlist(arg);
+                return true;
+            }
+        }
+        return false;
+    };
+
     auto parse = [&]() -> bool
     {
         int argi = -1;
@@ -132,63 +239,26 @@ void Program::main(const ArgList& args)
             if(++argi == 0) {
                 continue;
             }
-            else if(arg == "help") {
-                help(args);
-                return false;
+            else if(arg_command(argi, arg)) {
+                /* do nothing */;
             }
-            else if(arg == "play") {
-                set_command(Command::COMMAND_PLAY);
+            else if(arg_chip(argi, arg)) {
+                /* do nothing */;
             }
-            else if(arg == "dump") {
-                set_command(Command::COMMAND_DUMP);
+            else if(arg_channels(argi, arg)) {
+                /* do nothing */;
             }
-            else if(arg == "ay8910") {
-                set_chip(ChipType::CHIP_AY8910);
+            else if(arg_samplerate(argi, arg)) {
+                /* do nothing */;
             }
-            else if(arg == "ay8912") {
-                set_chip(ChipType::CHIP_AY8912);
-            }
-            else if(arg == "ay8913") {
-                set_chip(ChipType::CHIP_AY8913);
-            }
-            else if(arg == "ym2149") {
-                set_chip(ChipType::CHIP_YM2149);
-            }
-            else if(arg == "mono") {
-                set_channels(1);
-            }
-            else if(arg == "stereo") {
-                set_channels(2);
-            }
-            else if(arg == "8000") {
-                set_samplerate(8000);
-            }
-            else if(arg == "11025") {
-                set_samplerate(11025);
-            }
-            else if(arg == "16000") {
-                set_samplerate(16000);
-            }
-            else if(arg == "22050") {
-                set_samplerate(22050);
-            }
-            else if(arg == "32000") {
-                set_samplerate(32000);
-            }
-            else if(arg == "44100") {
-                set_samplerate(44100);
-            }
-            else if(arg == "48000") {
-                set_samplerate(48000);
-            }
-            else if(arg == "96000") {
-                set_samplerate(96000);
-            }
-            else if(file_exists(arg)) {
-                add_to_playlist(arg);
+            else if(arg_filename(argi, arg)) {
+                /* do nothing */;
             }
             else {
                 invalid_argument(arg);
+            }
+            if(command == COMMAND_HELP) {
+                break;
             }
         }
         return true;
@@ -211,8 +281,8 @@ void Program::main(const ArgList& args)
     auto execute = [&]() -> void
     {
         switch(command) {
-            case COMMAND_DFLT:
-                play();
+            case COMMAND_HELP:
+                help(args);
                 break;
             case COMMAND_PLAY:
                 play();
@@ -221,6 +291,7 @@ void Program::main(const ArgList& args)
                 dump();
                 break;
             default:
+                throw std::runtime_error("the command is not supported");
                 break;
         }
     };
@@ -247,37 +318,42 @@ void Program::help(const ArgList& args)
         return arg0;
     };
 
-    std::cout << "Usage: " << program() << " [OPTION...] [FILE...]" << std::endl;
-    std::cout << ""                                                 << std::endl;
-    std::cout << "Action:"                                          << std::endl;
-    std::cout << ""                                                 << std::endl;
-    std::cout << "    help                display this help"        << std::endl;
-    std::cout << "    play                play audio"               << std::endl;
-    std::cout << "    dump                dump audio to stdout"     << std::endl;
-    std::cout << ""                                                 << std::endl;
-    std::cout << "Chip-Type:"                                       << std::endl;
-    std::cout << ""                                                 << std::endl;
-    std::cout << "    ay8910              AY-3-8910"                << std::endl;
-    std::cout << "    ay8912              AY-3-8912"                << std::endl;
-    std::cout << "    ay8913              AY-3-8913"                << std::endl;
-    std::cout << "    ym2149              YM2149"                   << std::endl;
-    std::cout << ""                                                 << std::endl;
-    std::cout << "Channels:"                                        << std::endl;
-    std::cout << ""                                                 << std::endl;
-    std::cout << "    mono                mono output"              << std::endl;
-    std::cout << "    stereo              stereo output"            << std::endl;
-    std::cout << ""                                                 << std::endl;
-    std::cout << "Sample-Rate:"                                     << std::endl;
-    std::cout << ""                                                 << std::endl;
-    std::cout << "    8000                phone quality"            << std::endl;
-    std::cout << "    16000               cassette quality"         << std::endl;
-    std::cout << "    32000               broadcast quality"        << std::endl;
-    std::cout << "    11025               AM quality"               << std::endl;
-    std::cout << "    22050               FM quality"               << std::endl;
-    std::cout << "    44100               CD quality"               << std::endl;
-    std::cout << "    48000               DVD quality"              << std::endl;
-    std::cout << "    96000               BRD quality"              << std::endl;
-    std::cout << ""                                                 << std::endl;
+    auto usage = [&]() -> void
+    {
+        std::cout << "Usage: " << program() << " <command> [OPTION...] [FILE...]" << std::endl;
+        std::cout << ""                                                           << std::endl;
+        std::cout << "Command:"                                                   << std::endl;
+        std::cout << ""                                                           << std::endl;
+        std::cout << "    help                display this help"                  << std::endl;
+        std::cout << "    play                play audio"                         << std::endl;
+        std::cout << "    dump                dump audio to stdout"               << std::endl;
+        std::cout << ""                                                           << std::endl;
+        std::cout << "Chip-Type:"                                                 << std::endl;
+        std::cout << ""                                                           << std::endl;
+        std::cout << "    ay8910              AY-3-8910"                          << std::endl;
+        std::cout << "    ay8912              AY-3-8912"                          << std::endl;
+        std::cout << "    ay8913              AY-3-8913"                          << std::endl;
+        std::cout << "    ym2149              YM2149"                             << std::endl;
+        std::cout << ""                                                           << std::endl;
+        std::cout << "Channels:"                                                  << std::endl;
+        std::cout << ""                                                           << std::endl;
+        std::cout << "    mono                mono output"                        << std::endl;
+        std::cout << "    stereo              stereo output"                      << std::endl;
+        std::cout << ""                                                           << std::endl;
+        std::cout << "Sample-Rate:"                                               << std::endl;
+        std::cout << ""                                                           << std::endl;
+        std::cout << "    8000                phone quality"                      << std::endl;
+        std::cout << "    16000               cassette quality"                   << std::endl;
+        std::cout << "    32000               broadcast quality"                  << std::endl;
+        std::cout << "    11025               AM quality"                         << std::endl;
+        std::cout << "    22050               FM quality"                         << std::endl;
+        std::cout << "    44100               CD quality"                         << std::endl;
+        std::cout << "    48000               DVD quality"                        << std::endl;
+        std::cout << "    96000               BRD quality"                        << std::endl;
+        std::cout << ""                                                           << std::endl;
+    };
+
+    return usage();
 }
 
 // ---------------------------------------------------------------------------
