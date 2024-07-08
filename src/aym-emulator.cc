@@ -511,6 +511,21 @@ void Emulator::reset()
 
 void Emulator::clock()
 {
+    auto fixup = [&](Sound& lhs, Sound& rhs) -> void
+    {
+        if((lhs.period == rhs.period) && (lhs.counter != rhs.counter)) {
+            rhs.counter = lhs.counter;
+            rhs.phase   = lhs.phase;
+        }
+    };
+
+    auto prepare = [&]() -> void
+    {
+        fixup(_sound[0], _sound[1]);
+        fixup(_sound[0], _sound[2]);
+        fixup(_sound[1], _sound[2]);
+    };
+
     auto get_output = [&](const int sound_index, const int noise_index) -> float
     {
         const auto sound     = (_sound[sound_index].phase & _state.has_sound[sound_index]);
@@ -532,6 +547,7 @@ void Emulator::clock()
         const auto clk_div = ((++_state.ticks) & 0x07);
 
         if(clk_div == 0) {
+            prepare();
             SoundTraits::clock(_sound[Traits::SOUND0]);
             SoundTraits::clock(_sound[Traits::SOUND1]);
             SoundTraits::clock(_sound[Traits::SOUND2]);
