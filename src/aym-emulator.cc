@@ -530,7 +530,7 @@ void Emulator::clock()
     {
         const auto sound     = (_sound[sound_index].phase & _state.has_sound[sound_index]);
         const auto noise     = (_noise[noise_index].phase & _state.has_noise[sound_index]);
-        const auto amplitude = (_sound[sound_index].amplitude & 0x1f);
+        const auto amplitude = (_sound[sound_index].amplitude & 0x20 ? (_envelope.amplitude & 0x1f) : (_sound[sound_index].amplitude & 0x1f));
 
         return _state.dac[(sound | noise) * amplitude];
     };
