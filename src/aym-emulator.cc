@@ -38,58 +38,49 @@ namespace {
 
 struct BasicTraits
 {
-    using ChipType = aym::ChipType;
-    using State    = aym::State;
-    using Sound    = aym::Sound;
-    using Noise    = aym::Noise;
-    using Envelope = aym::Envelope;
-    using Output   = aym::Output;
-};
+    using ChipType  = aym::ChipType;
+    using State     = aym::State;
+    using Sound     = aym::Sound;
+    using Noise     = aym::Noise;
+    using Envelope  = aym::Envelope;
+    using Output    = aym::Output;
+    using Emulator  = aym::Emulator;
+    using Interface = aym::Interface;
 
-}
-
-// ---------------------------------------------------------------------------
-// <anonymous>::Traits
-// ---------------------------------------------------------------------------
-
-namespace {
-
-struct Traits final
-    : public BasicTraits
-{
-    static const float   ay_dac[32];
-    static const float   ym_dac[32];
-    static const uint8_t cycles[16][2];
-
-    static constexpr uint8_t CHANNEL_A_FINE_TUNE   = 0x00;
-    static constexpr uint8_t CHANNEL_A_COARSE_TUNE = 0x01;
-    static constexpr uint8_t CHANNEL_B_FINE_TUNE   = 0x02;
-    static constexpr uint8_t CHANNEL_B_COARSE_TUNE = 0x03;
-    static constexpr uint8_t CHANNEL_C_FINE_TUNE   = 0x04;
-    static constexpr uint8_t CHANNEL_C_COARSE_TUNE = 0x05;
-    static constexpr uint8_t NOISE_PERIOD          = 0x06;
-    static constexpr uint8_t MIXER_AND_IO_CONTROL  = 0x07;
-    static constexpr uint8_t CHANNEL_A_AMPLITUDE   = 0x08;
-    static constexpr uint8_t CHANNEL_B_AMPLITUDE   = 0x09;
-    static constexpr uint8_t CHANNEL_C_AMPLITUDE   = 0x0a;
-    static constexpr uint8_t ENVELOPE_FINE_TUNE    = 0x0b;
-    static constexpr uint8_t ENVELOPE_COARSE_TUNE  = 0x0c;
-    static constexpr uint8_t ENVELOPE_SHAPE        = 0x0d;
-    static constexpr uint8_t IO_PORT_A             = 0x0e;
-    static constexpr uint8_t IO_PORT_B             = 0x0f;
-    static constexpr uint8_t RAMP_UP               = 0x00;
-    static constexpr uint8_t RAMP_DOWN             = 0x01;
-    static constexpr uint8_t HOLD_UP               = 0x02;
-    static constexpr uint8_t HOLD_DOWN             = 0x03;
+    static constexpr uint8_t ADDRESS_REGISTER      = -1;
+    static constexpr uint8_t CHANNEL_A_FINE_TUNE   =  0;
+    static constexpr uint8_t CHANNEL_A_COARSE_TUNE =  1;
+    static constexpr uint8_t CHANNEL_B_FINE_TUNE   =  2;
+    static constexpr uint8_t CHANNEL_B_COARSE_TUNE =  3;
+    static constexpr uint8_t CHANNEL_C_FINE_TUNE   =  4;
+    static constexpr uint8_t CHANNEL_C_COARSE_TUNE =  5;
+    static constexpr uint8_t NOISE_PERIOD          =  6;
+    static constexpr uint8_t MIXER_AND_IO_CONTROL  =  7;
+    static constexpr uint8_t CHANNEL_A_AMPLITUDE   =  8;
+    static constexpr uint8_t CHANNEL_B_AMPLITUDE   =  9;
+    static constexpr uint8_t CHANNEL_C_AMPLITUDE   = 10;
+    static constexpr uint8_t ENVELOPE_FINE_TUNE    = 11;
+    static constexpr uint8_t ENVELOPE_COARSE_TUNE  = 12;
+    static constexpr uint8_t ENVELOPE_SHAPE        = 13;
+    static constexpr uint8_t IO_PORT_A             = 14;
+    static constexpr uint8_t IO_PORT_B             = 15;
+    static constexpr uint8_t RAMP_UP               = 0;
+    static constexpr uint8_t RAMP_DOWN             = 1;
+    static constexpr uint8_t HOLD_UP               = 2;
+    static constexpr uint8_t HOLD_DOWN             = 3;
     static constexpr uint8_t SOUND0                = 0;
     static constexpr uint8_t SOUND1                = 1;
     static constexpr uint8_t SOUND2                = 2;
     static constexpr uint8_t NOISE0                = 0;
     static constexpr uint8_t PORT0                 = 0;
     static constexpr uint8_t PORT1                 = 1;
+
+    static const float   ay_dac[32];
+    static const float   ym_dac[32];
+    static const uint8_t cycles[16][2];
 };
 
-const float Traits::ay_dac[32] = {
+const float BasicTraits::ay_dac[32] = {
     0.0000000, 0.0000000, 0.0099947, 0.0099947,
     0.0144503, 0.0144503, 0.0210575, 0.0210575,
     0.0307012, 0.0307012, 0.0455482, 0.0455482,
@@ -100,7 +91,7 @@ const float Traits::ay_dac[32] = {
     0.8055848, 0.8055848, 1.0000000, 1.0000000
 };
 
-const float Traits::ym_dac[32] = {
+const float BasicTraits::ym_dac[32] = {
     0.0000000, 0.0000000, 0.0046540, 0.0077211,
     0.0109560, 0.0139620, 0.0169986, 0.0200198,
     0.0243687, 0.0296941, 0.0350652, 0.0403906,
@@ -111,7 +102,7 @@ const float Traits::ym_dac[32] = {
     0.6351720, 0.7580072, 0.8799268, 1.0000000
 };
 
-const uint8_t Traits::cycles[16][2] = {
+const uint8_t BasicTraits::cycles[16][2] = {
     { RAMP_DOWN, HOLD_DOWN },
     { RAMP_DOWN, HOLD_DOWN },
     { RAMP_DOWN, HOLD_DOWN },
@@ -159,19 +150,19 @@ struct StateTraits final
         }
     }
 
-    static inline auto set_type(State& state, const ChipType type) -> void
+    static inline auto setup(State& state, const ChipType type) -> void
     {
         switch(state.type = type) {
             case ChipType::CHIP_AY8910:
             case ChipType::CHIP_AY8912:
             case ChipType::CHIP_AY8913:
-                static_cast<void>(::memcpy(state.dac, Traits::ay_dac, sizeof(state.dac)));
+                static_cast<void>(::memcpy(state.dac, ay_dac, sizeof(state.dac)));
                 break;
             case ChipType::CHIP_YM2149:
-                static_cast<void>(::memcpy(state.dac, Traits::ym_dac, sizeof(state.dac)));
+                static_cast<void>(::memcpy(state.dac, ym_dac, sizeof(state.dac)));
                 break;
             default:
-                static_cast<void>(::memcpy(state.dac, Traits::ay_dac, sizeof(state.dac)));
+                static_cast<void>(::memcpy(state.dac, ay_dac, sizeof(state.dac)));
                 break;
         }
     }
@@ -183,46 +174,46 @@ struct StateTraits final
 
     static inline auto set_mixer_and_io_control(State& state, const uint8_t value) -> uint8_t
     {
-        state.has_sound[Traits::SOUND0] = ((value & 0x01) == 0);
-        state.has_sound[Traits::SOUND1] = ((value & 0x02) == 0);
-        state.has_sound[Traits::SOUND2] = ((value & 0x04) == 0);
-        state.has_noise[Traits::SOUND0] = ((value & 0x08) == 0);
-        state.has_noise[Traits::SOUND1] = ((value & 0x10) == 0);
-        state.has_noise[Traits::SOUND2] = ((value & 0x20) == 0);
-        state.dir_port[Traits::PORT0]   = ((value & 0x40) != 0);
-        state.dir_port[Traits::PORT1]   = ((value & 0x80) != 0);
+        state.has_sound[SOUND0] = ((value & 0x01) == 0);
+        state.has_sound[SOUND1] = ((value & 0x02) == 0);
+        state.has_sound[SOUND2] = ((value & 0x04) == 0);
+        state.has_noise[SOUND0] = ((value & 0x08) == 0);
+        state.has_noise[SOUND1] = ((value & 0x10) == 0);
+        state.has_noise[SOUND2] = ((value & 0x20) == 0);
+        state.dir_port[PORT0]   = ((value & 0x40) != 0);
+        state.dir_port[PORT1]   = ((value & 0x80) != 0);
 
         return value;
     }
 
-    static inline auto get_port0(State& state, const uint8_t value) -> uint8_t
+    static inline auto get_port0(State& state, Emulator& emulator, Interface& interface, const uint8_t value) -> uint8_t
     {
-        if(state.dir_port[Traits::PORT0] == 0) {
-            /* call port0 input */
+        if(state.dir_port[PORT0] == 0) {
+            return interface.aym_port_a_rd(emulator, value);
         }
         return value;
     }
 
-    static inline auto set_port0(State& state, const uint8_t value) -> uint8_t
+    static inline auto set_port0(State& state, Emulator& emulator, Interface& interface, const uint8_t value) -> uint8_t
     {
-        if(state.dir_port[Traits::PORT0] != 0) {
-            /* call port0 output */
+        if(state.dir_port[PORT0] != 0) {
+            return interface.aym_port_a_wr(emulator, value);
         }
         return value;
     }
 
-    static inline auto get_port1(State& state, const uint8_t value) -> uint8_t
+    static inline auto get_port1(State& state, Emulator& emulator, Interface& interface, const uint8_t value) -> uint8_t
     {
-        if(state.dir_port[Traits::PORT1] == 0) {
-            /* call port1 input */
+        if(state.dir_port[PORT1] == 0) {
+            return interface.aym_port_b_rd(emulator, value);
         }
         return value;
     }
 
-    static inline auto set_port1(State& state, const uint8_t value) -> uint8_t
+    static inline auto set_port1(State& state, Emulator& emulator, Interface& interface, const uint8_t value) -> uint8_t
     {
-        if(state.dir_port[Traits::PORT1] != 0) {
-            /* call port1 output */
+        if(state.dir_port[PORT1] != 0) {
+            return interface.aym_port_b_wr(emulator, value);
         }
         return value;
     }
@@ -249,6 +240,9 @@ struct SoundTraits final
 
     static inline auto clock(Sound& sound) -> void
     {
+        if(sound.period == 0) {
+            return;
+        }
         if(++sound.counter >= sound.period) {
             sound.counter &= 0;
             sound.phase   ^= 1;
@@ -322,6 +316,9 @@ struct NoiseTraits final
 
     static inline auto clock(Noise& noise) -> void
     {
+        if(noise.period == 0) {
+            return;
+        }
         if(++noise.counter >= noise.period) {
             noise.counter &= 0;
             const uint32_t lfsr = noise.shift;
@@ -389,23 +386,23 @@ struct EnvelopeTraits final
     {
         if(++envelope.counter >= envelope.period) {
             envelope.counter &= 0;
-            switch(Traits::cycles[envelope.shape][envelope.phase]) {
-                case Traits::RAMP_UP:
+            switch(cycles[envelope.shape][envelope.phase]) {
+                case RAMP_UP:
                     envelope.amplitude = ((envelope.amplitude + 1) & 0x1f);
                     if(envelope.amplitude == 0x1f) {
                         envelope.phase ^= 1;
                     }
                     break;
-                case Traits::RAMP_DOWN:
+                case RAMP_DOWN:
                     envelope.amplitude = ((envelope.amplitude - 1) & 0x1f);
                     if(envelope.amplitude == 0x00) {
                         envelope.phase ^= 1;
                     }
                     break;
-                case Traits::HOLD_UP:
+                case HOLD_UP:
                     envelope.amplitude = 0x1f;
                     break;
-                case Traits::HOLD_DOWN:
+                case HOLD_DOWN:
                     envelope.amplitude = 0x00;
                     break;
                 default:
@@ -486,14 +483,15 @@ struct OutputTraits final
 
 namespace aym {
 
-Emulator::Emulator(const ChipType type)
-    : _state()
+Emulator::Emulator(const ChipType type, Interface& interface)
+    : _interface(interface)
+    , _state()
     , _sound()
     , _noise()
     , _envelope()
     , _output()
 {
-    StateTraits::set_type(_state, type);
+    StateTraits::setup(_state, type);
 
     reset();
 }
@@ -501,10 +499,10 @@ Emulator::Emulator(const ChipType type)
 void Emulator::reset()
 {
     StateTraits::reset(_state);
-    SoundTraits::reset(_sound[Traits::SOUND0]);
-    SoundTraits::reset(_sound[Traits::SOUND1]);
-    SoundTraits::reset(_sound[Traits::SOUND2]);
-    NoiseTraits::reset(_noise[Traits::NOISE0]);
+    SoundTraits::reset(_sound[BasicTraits::SOUND0]);
+    SoundTraits::reset(_sound[BasicTraits::SOUND1]);
+    SoundTraits::reset(_sound[BasicTraits::SOUND2]);
+    NoiseTraits::reset(_noise[BasicTraits::NOISE0]);
     EnvelopeTraits::reset(_envelope);
     OutputTraits::reset(_output);
 }
@@ -537,9 +535,9 @@ void Emulator::clock()
 
     auto output = [&]() -> void
     {
-        _output.channel0 = get_output(Traits::SOUND0, Traits::NOISE0);
-        _output.channel1 = get_output(Traits::SOUND1, Traits::NOISE0);
-        _output.channel2 = get_output(Traits::SOUND2, Traits::NOISE0);
+        _output.channel0 = get_output(BasicTraits::SOUND0, BasicTraits::NOISE0);
+        _output.channel1 = get_output(BasicTraits::SOUND1, BasicTraits::NOISE0);
+        _output.channel2 = get_output(BasicTraits::SOUND2, BasicTraits::NOISE0);
     };
 
     auto update = [&]() -> void
@@ -548,16 +546,21 @@ void Emulator::clock()
 
         if(clk_div == 0) {
             prepare();
-            SoundTraits::clock(_sound[Traits::SOUND0]);
-            SoundTraits::clock(_sound[Traits::SOUND1]);
-            SoundTraits::clock(_sound[Traits::SOUND2]);
-            NoiseTraits::clock(_noise[Traits::NOISE0]);
+            SoundTraits::clock(_sound[BasicTraits::SOUND0]);
+            SoundTraits::clock(_sound[BasicTraits::SOUND1]);
+            SoundTraits::clock(_sound[BasicTraits::SOUND2]);
+            NoiseTraits::clock(_noise[BasicTraits::NOISE0]);
             EnvelopeTraits::clock(_envelope);
             output();
         }
     };
 
     return update();
+}
+
+uint8_t Emulator::get_index(uint8_t index)
+{
+    return (index = _state.index);
 }
 
 uint8_t Emulator::set_index(uint8_t index)
@@ -571,53 +574,53 @@ uint8_t Emulator::get_value(uint8_t value)
     auto&      array = _state.array[index & 0x0f];
 
     switch(index) {
-        case Traits::CHANNEL_A_FINE_TUNE:
-            value = SoundTraits::get_fine_tune(_sound[Traits::SOUND0], (array &= 0xff));
+        case BasicTraits::CHANNEL_A_FINE_TUNE:
+            value = SoundTraits::get_fine_tune(_sound[BasicTraits::SOUND0], (array &= 0xff));
             break;
-        case Traits::CHANNEL_A_COARSE_TUNE:
-            value = SoundTraits::get_coarse_tune(_sound[Traits::SOUND0], (array &= 0x0f));
+        case BasicTraits::CHANNEL_A_COARSE_TUNE:
+            value = SoundTraits::get_coarse_tune(_sound[BasicTraits::SOUND0], (array &= 0x0f));
             break;
-        case Traits::CHANNEL_B_FINE_TUNE:
-            value = SoundTraits::get_fine_tune(_sound[Traits::SOUND1], (array &= 0xff));
+        case BasicTraits::CHANNEL_B_FINE_TUNE:
+            value = SoundTraits::get_fine_tune(_sound[BasicTraits::SOUND1], (array &= 0xff));
             break;
-        case Traits::CHANNEL_B_COARSE_TUNE:
-            value = SoundTraits::get_coarse_tune(_sound[Traits::SOUND1], (array &= 0x0f));
+        case BasicTraits::CHANNEL_B_COARSE_TUNE:
+            value = SoundTraits::get_coarse_tune(_sound[BasicTraits::SOUND1], (array &= 0x0f));
             break;
-        case Traits::CHANNEL_C_FINE_TUNE:
-            value = SoundTraits::get_fine_tune(_sound[Traits::SOUND2], (array &= 0xff));
+        case BasicTraits::CHANNEL_C_FINE_TUNE:
+            value = SoundTraits::get_fine_tune(_sound[BasicTraits::SOUND2], (array &= 0xff));
             break;
-        case Traits::CHANNEL_C_COARSE_TUNE:
-            value = SoundTraits::get_coarse_tune(_sound[Traits::SOUND2], (array &= 0x0f));
+        case BasicTraits::CHANNEL_C_COARSE_TUNE:
+            value = SoundTraits::get_coarse_tune(_sound[BasicTraits::SOUND2], (array &= 0x0f));
             break;
-        case Traits::NOISE_PERIOD:
-            value = NoiseTraits::get_fine_tune(_noise[Traits::NOISE0], (array &= 0x1f));
+        case BasicTraits::NOISE_PERIOD:
+            value = NoiseTraits::get_fine_tune(_noise[BasicTraits::NOISE0], (array &= 0x1f));
             break;
-        case Traits::MIXER_AND_IO_CONTROL:
+        case BasicTraits::MIXER_AND_IO_CONTROL:
             value = StateTraits::get_mixer_and_io_control(_state, (array &= 0xff));
             break;
-        case Traits::CHANNEL_A_AMPLITUDE:
-            value = SoundTraits::get_amplitude(_sound[Traits::SOUND0], (array &= 0x1f));
+        case BasicTraits::CHANNEL_A_AMPLITUDE:
+            value = SoundTraits::get_amplitude(_sound[BasicTraits::SOUND0], (array &= 0x1f));
             break;
-        case Traits::CHANNEL_B_AMPLITUDE:
-            value = SoundTraits::get_amplitude(_sound[Traits::SOUND1], (array &= 0x1f));
+        case BasicTraits::CHANNEL_B_AMPLITUDE:
+            value = SoundTraits::get_amplitude(_sound[BasicTraits::SOUND1], (array &= 0x1f));
             break;
-        case Traits::CHANNEL_C_AMPLITUDE:
-            value = SoundTraits::get_amplitude(_sound[Traits::SOUND2], (array &= 0x1f));
+        case BasicTraits::CHANNEL_C_AMPLITUDE:
+            value = SoundTraits::get_amplitude(_sound[BasicTraits::SOUND2], (array &= 0x1f));
             break;
-        case Traits::ENVELOPE_FINE_TUNE:
+        case BasicTraits::ENVELOPE_FINE_TUNE:
             value = EnvelopeTraits::get_fine_tune(_envelope, (array &= 0xff));
             break;
-        case Traits::ENVELOPE_COARSE_TUNE:
+        case BasicTraits::ENVELOPE_COARSE_TUNE:
             value = EnvelopeTraits::get_coarse_tune(_envelope, (array &= 0xff));
             break;
-        case Traits::ENVELOPE_SHAPE:
+        case BasicTraits::ENVELOPE_SHAPE:
             value = EnvelopeTraits::get_shape(_envelope, (array &= 0x0f));
             break;
-        case Traits::IO_PORT_A:
-            value = StateTraits::get_port0(_state, (array &= 0xff));
+        case BasicTraits::IO_PORT_A:
+            value = StateTraits::get_port0(_state, *this, _interface, (array &= 0xff));
             break;
-        case Traits::IO_PORT_B:
-            value = StateTraits::get_port1(_state, (array &= 0xff));
+        case BasicTraits::IO_PORT_B:
+            value = StateTraits::get_port1(_state, *this, _interface, (array &= 0xff));
             break;
         default:
             break;
@@ -631,53 +634,53 @@ uint8_t Emulator::set_value(uint8_t value)
     auto&      array = _state.array[index & 0x0f];
 
     switch(index) {
-        case Traits::CHANNEL_A_FINE_TUNE:
-            array = SoundTraits::set_fine_tune(_sound[Traits::SOUND0], (value &= 0xff));
+        case BasicTraits::CHANNEL_A_FINE_TUNE:
+            array = SoundTraits::set_fine_tune(_sound[BasicTraits::SOUND0], (value &= 0xff));
             break;
-        case Traits::CHANNEL_A_COARSE_TUNE:
-            array = SoundTraits::set_coarse_tune(_sound[Traits::SOUND0], (value &= 0x0f));
+        case BasicTraits::CHANNEL_A_COARSE_TUNE:
+            array = SoundTraits::set_coarse_tune(_sound[BasicTraits::SOUND0], (value &= 0x0f));
             break;
-        case Traits::CHANNEL_B_FINE_TUNE:
-            array = SoundTraits::set_fine_tune(_sound[Traits::SOUND1], (value &= 0xff));
+        case BasicTraits::CHANNEL_B_FINE_TUNE:
+            array = SoundTraits::set_fine_tune(_sound[BasicTraits::SOUND1], (value &= 0xff));
             break;
-        case Traits::CHANNEL_B_COARSE_TUNE:
-            array = SoundTraits::set_coarse_tune(_sound[Traits::SOUND1], (value &= 0x0f));
+        case BasicTraits::CHANNEL_B_COARSE_TUNE:
+            array = SoundTraits::set_coarse_tune(_sound[BasicTraits::SOUND1], (value &= 0x0f));
             break;
-        case Traits::CHANNEL_C_FINE_TUNE:
-            array = SoundTraits::set_fine_tune(_sound[Traits::SOUND2], (value &= 0xff));
+        case BasicTraits::CHANNEL_C_FINE_TUNE:
+            array = SoundTraits::set_fine_tune(_sound[BasicTraits::SOUND2], (value &= 0xff));
             break;
-        case Traits::CHANNEL_C_COARSE_TUNE:
-            array = SoundTraits::set_coarse_tune(_sound[Traits::SOUND2], (value &= 0x0f));
+        case BasicTraits::CHANNEL_C_COARSE_TUNE:
+            array = SoundTraits::set_coarse_tune(_sound[BasicTraits::SOUND2], (value &= 0x0f));
             break;
-        case Traits::NOISE_PERIOD:
-            array = NoiseTraits::set_fine_tune(_noise[Traits::NOISE0], (value &= 0x1f));
+        case BasicTraits::NOISE_PERIOD:
+            array = NoiseTraits::set_fine_tune(_noise[BasicTraits::NOISE0], (value &= 0x1f));
             break;
-        case Traits::MIXER_AND_IO_CONTROL:
+        case BasicTraits::MIXER_AND_IO_CONTROL:
             array = StateTraits::set_mixer_and_io_control(_state, (value &= 0xff));
             break;
-        case Traits::CHANNEL_A_AMPLITUDE:
-            array = SoundTraits::set_amplitude(_sound[Traits::SOUND0], (value &= 0x1f));
+        case BasicTraits::CHANNEL_A_AMPLITUDE:
+            array = SoundTraits::set_amplitude(_sound[BasicTraits::SOUND0], (value &= 0x1f));
             break;
-        case Traits::CHANNEL_B_AMPLITUDE:
-            array = SoundTraits::set_amplitude(_sound[Traits::SOUND1], (value &= 0x1f));
+        case BasicTraits::CHANNEL_B_AMPLITUDE:
+            array = SoundTraits::set_amplitude(_sound[BasicTraits::SOUND1], (value &= 0x1f));
             break;
-        case Traits::CHANNEL_C_AMPLITUDE:
-            array = SoundTraits::set_amplitude(_sound[Traits::SOUND2], (value &= 0x1f));
+        case BasicTraits::CHANNEL_C_AMPLITUDE:
+            array = SoundTraits::set_amplitude(_sound[BasicTraits::SOUND2], (value &= 0x1f));
             break;
-        case Traits::ENVELOPE_FINE_TUNE:
+        case BasicTraits::ENVELOPE_FINE_TUNE:
             array = EnvelopeTraits::set_fine_tune(_envelope, (value &= 0xff));
             break;
-        case Traits::ENVELOPE_COARSE_TUNE:
+        case BasicTraits::ENVELOPE_COARSE_TUNE:
             array = EnvelopeTraits::set_coarse_tune(_envelope, (value &= 0xff));
             break;
-        case Traits::ENVELOPE_SHAPE:
+        case BasicTraits::ENVELOPE_SHAPE:
             array = EnvelopeTraits::set_shape(_envelope, (value &= 0x0f));
             break;
-        case Traits::IO_PORT_A:
-            array = StateTraits::set_port0(_state, (value &= 0xff));
+        case BasicTraits::IO_PORT_A:
+            array = StateTraits::set_port0(_state, *this, _interface, (value &= 0xff));
             break;
-        case Traits::IO_PORT_B:
-            array = StateTraits::set_port1(_state, (value &= 0xff));
+        case BasicTraits::IO_PORT_B:
+            array = StateTraits::set_port1(_state, *this, _interface, (value &= 0xff));
             break;
         default:
             break;

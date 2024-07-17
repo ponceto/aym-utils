@@ -18,6 +18,17 @@
 #define __AYM_Emulator_h__
 
 // ---------------------------------------------------------------------------
+// forward declarations
+// ---------------------------------------------------------------------------
+
+namespace aym {
+
+class Emulator;
+class Interface;
+
+}
+
+// ---------------------------------------------------------------------------
 // aym::ChipType
 // ---------------------------------------------------------------------------
 
@@ -25,11 +36,12 @@ namespace aym {
 
 enum ChipType
 {
-    CHIP_DEFAULT = 0,
-    CHIP_AY8910  = 1,
-    CHIP_AY8912  = 2,
-    CHIP_AY8913  = 3,
-    CHIP_YM2149  = 4,
+    CHIP_INVALID = -1,
+    CHIP_DEFAULT =  0,
+    CHIP_AY8910  =  1,
+    CHIP_AY8912  =  2,
+    CHIP_AY8913  =  3,
+    CHIP_YM2149  =  4,
 };
 
 }
@@ -127,7 +139,7 @@ namespace aym {
 class Emulator
 {
 public: // public interface
-    Emulator(const ChipType type);
+    Emulator(const ChipType type, Interface& interface);
 
     Emulator(const Emulator&) = delete;
 
@@ -139,11 +151,13 @@ public: // public interface
 
     void clock();
 
-    uint8_t set_index(uint8_t index);
+    uint8_t get_index(uint8_t index = 0xff);
 
-    uint8_t get_value(uint8_t value);
+    uint8_t set_index(uint8_t index = 0xff);
 
-    uint8_t set_value(uint8_t value);
+    uint8_t get_value(uint8_t value = 0xff);
+
+    uint8_t set_value(uint8_t value = 0xff);
 
     const Output& get_output() const
     {
@@ -151,11 +165,40 @@ public: // public interface
     }
 
 protected: // protected data
-    State    _state;
-    Sound    _sound[3];
-    Noise    _noise[1];
-    Envelope _envelope;
-    Output   _output;
+    Interface& _interface;
+    State      _state;
+    Sound      _sound[3];
+    Noise      _noise[1];
+    Envelope   _envelope;
+    Output     _output;
+};
+
+}
+
+// ---------------------------------------------------------------------------
+// aym::Interface
+// ---------------------------------------------------------------------------
+
+namespace aym {
+
+class Interface
+{
+public: // public interface
+    Interface() = default;
+
+    Interface(const Interface&) = default;
+
+    Interface& operator=(const Interface&) = default;
+
+    virtual ~Interface() = default;
+
+    virtual uint8_t aym_port_a_rd(Emulator& emulator, uint8_t data) = 0;
+
+    virtual uint8_t aym_port_a_wr(Emulator& emulator, uint8_t data) = 0;
+
+    virtual uint8_t aym_port_b_rd(Emulator& emulator, uint8_t data) = 0;
+
+    virtual uint8_t aym_port_b_wr(Emulator& emulator, uint8_t data) = 0;
 };
 
 }

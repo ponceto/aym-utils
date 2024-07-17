@@ -44,7 +44,7 @@ namespace aym {
 PlayerProcessor::PlayerProcessor(AudioDevice& device, const Settings& settings)
     : AudioProcessor(device)
     , _archive()
-    , _emulator(settings.get_chip())
+    , _emulator(settings.get_chip(), *this)
     , _music()
     , _sound()
 {
@@ -261,6 +261,26 @@ void PlayerProcessor::load(const std::string& filename)
     };
 
     return try_load();
+}
+
+uint8_t PlayerProcessor::aym_port_a_rd(Emulator& emulator, uint8_t data)
+{
+    return data;
+}
+
+uint8_t PlayerProcessor::aym_port_a_wr(Emulator& emulator, uint8_t data)
+{
+    return data;
+}
+
+uint8_t PlayerProcessor::aym_port_b_rd(Emulator& emulator, uint8_t data)
+{
+    return data;
+}
+
+uint8_t PlayerProcessor::aym_port_b_wr(Emulator& emulator, uint8_t data)
+{
+    return data;
 }
 
 }

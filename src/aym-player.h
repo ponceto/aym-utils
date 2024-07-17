@@ -31,6 +31,7 @@ namespace aym {
 
 class PlayerProcessor final
     : public AudioProcessor
+    , public Interface
 {
 public: // public interface
     PlayerProcessor(AudioDevice& device, const Settings& settings);
@@ -46,6 +47,14 @@ public: // public interface
     bool playing();
 
     void load(const std::string& filename);
+
+    virtual uint8_t aym_port_a_rd(Emulator& emulator, uint8_t data) override final;
+
+    virtual uint8_t aym_port_a_wr(Emulator& emulator, uint8_t data) override final;
+
+    virtual uint8_t aym_port_b_rd(Emulator& emulator, uint8_t data) override final;
+
+    virtual uint8_t aym_port_b_wr(Emulator& emulator, uint8_t data) override final;
 
 private: // private types
     struct Music
