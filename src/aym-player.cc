@@ -114,25 +114,25 @@ void PlayerProcessor::process(const void* input, void* output, const uint32_t co
 
     auto mix_mono = [&](MonoFrameFlt32& audio_frame) -> void
     {
-        const float mono = (psg.channel0 * (1.00 / 3.0))
-                         + (psg.channel1 * (1.00 / 3.0))
-                         + (psg.channel2 * (1.00 / 3.0))
+        const float mono = (psg.channel0 * 1.00f)
+                         + (psg.channel1 * 1.00f)
+                         + (psg.channel2 * 1.00f)
                          ;
-        audio_frame.mono = ((mono * 2.0) - 1.0);
+        audio_frame.mono = (mono / 3.0f);
     };
 
     auto mix_stereo = [&](StereoFrameFlt32& audio_frame) -> void
     {
-        const float left  = (psg.channel0 * (0.75 / 1.5))
-                          + (psg.channel1 * (0.50 / 1.5))
-                          + (psg.channel2 * (0.25 / 1.5))
+        const float left  = (psg.channel0 * 0.75f)
+                          + (psg.channel1 * 0.50f)
+                          + (psg.channel2 * 0.25f)
                           ;
-        const float right = (psg.channel0 * (0.25 / 1.5))
-                          + (psg.channel1 * (0.50 / 1.5))
-                          + (psg.channel2 * (0.75 / 1.5))
+        const float right = (psg.channel0 * 0.25f)
+                          + (psg.channel1 * 0.50f)
+                          + (psg.channel2 * 0.75f)
                           ;
-        audio_frame.left  = ((left  * 2.0) - 1.0);
-        audio_frame.right = ((right * 2.0) - 1.0);
+        audio_frame.left  = (left  / 1.5f);
+        audio_frame.right = (right / 1.5f);
     };
 
     auto mix = [&](const int index) -> void
