@@ -547,15 +547,10 @@ void Emulator::clock()
         int8_t        output    = 0;
 
         if(has_sound != 0) {
-            output = sig_sound;
+            output |= sig_sound;
         }
         if(has_noise != 0) {
-            if(output != 0) {
-                output = sig_noise * output;
-            }
-            else {
-                output = sig_noise;
-            }
+            output |= sig_noise;
         }
 
         return static_cast<float>(output) * _state.dac[amplitude];
