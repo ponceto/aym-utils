@@ -108,10 +108,6 @@ aym_player_LDADD = \
 	-llhasa -ldl -lpthread -lm \
 	$(NULL)
 
-aym_player_CLEANFILES = \
-	aym-player.bin \
-	$(NULL)
-
 # ----------------------------------------------------------------------------
 # build aym_player
 # ----------------------------------------------------------------------------
@@ -126,7 +122,7 @@ $(aym_player_PROGRAM): $(aym_player_OBJECTS)
 # ----------------------------------------------------------------------------
 
 clean_aym_player:
-	$(RM) $(RMFLAGS) $(aym_player_OBJECTS) $(aym_player_CLEANFILES)
+	$(RM) $(RMFLAGS) $(aym_player_OBJECTS) $(aym_player_PROGRAM)
 
 # ----------------------------------------------------------------------------
 # End-Of-File
