@@ -47,6 +47,7 @@ PlayerProcessor::PlayerProcessor(AudioDevice& device, const Settings& settings)
     , _emulator(settings.get_chip(), *this)
     , _music()
     , _sound()
+    , _audio()
 {
 }
 
@@ -114,35 +115,65 @@ void PlayerProcessor::process(const void* input, void* output, const uint32_t co
 
     auto mix_mono = [&](MonoFrameFlt32& audio_frame) -> void
     {
-        const float mono = (psg.channel0 * 1.00f)
-                         + (psg.channel1 * 1.00f)
-                         + (psg.channel2 * 1.00f)
+        const float mono = (_audio.dcb_output[0] * 1.00f)
+                         + (_audio.dcb_output[1] * 1.00f)
+                         + (_audio.dcb_output[2] * 1.00f)
                          ;
         audio_frame.mono = (mono / 3.0f);
     };
 
     auto mix_stereo = [&](StereoFrameFlt32& audio_frame) -> void
     {
-        const float left  = (psg.channel0 * 0.75f)
-                          + (psg.channel1 * 0.50f)
-                          + (psg.channel2 * 0.25f)
+        const float left  = (_audio.dcb_output[0] * 0.75f)
+                          + (_audio.dcb_output[1] * 0.50f)
+                          + (_audio.dcb_output[2] * 0.25f)
                           ;
-        const float right = (psg.channel0 * 0.25f)
-                          + (psg.channel1 * 0.50f)
-                          + (psg.channel2 * 0.75f)
+        const float right = (_audio.dcb_output[0] * 0.25f)
+                          + (_audio.dcb_output[1] * 0.50f)
+                          + (_audio.dcb_output[2] * 0.75f)
                           ;
         audio_frame.left  = (left  / 1.5f);
         audio_frame.right = (right / 1.5f);
     };
 
+    auto mix_surround40 = [&](Surround40FrameFlt32& audio_frame) -> void
+    {
+        const float left  = (_audio.dcb_output[0] * 0.75f)
+                          + (_audio.dcb_output[1] * 0.50f)
+                          + (_audio.dcb_output[2] * 0.25f)
+                          ;
+        const float right = (_audio.dcb_output[0] * 0.25f)
+                          + (_audio.dcb_output[1] * 0.50f)
+                          + (_audio.dcb_output[2] * 0.75f)
+                          ;
+        audio_frame.front_left  = (left  / 1.5f);
+        audio_frame.front_right = (right / 1.5f);
+        audio_frame.back_left   = (left  / 1.5f);
+        audio_frame.back_right  = (right / 1.5f);
+    };
+
+    auto dc_block = [&](const int channel, const float input) -> void
+    {
+        constexpr float attenuation = 0.999f;
+        const float output = (input - _audio.dcb_input[channel]) + (attenuation * _audio.dcb_output[channel]);
+        _audio.dcb_input[channel]  = input;
+        _audio.dcb_output[channel] = output;
+    };
+
     auto mix = [&](const int index) -> void
     {
+        dc_block(0, psg.channel0);
+        dc_block(1, psg.channel1);
+        dc_block(2, psg.channel2);
         switch(channels) {
             case 1:
                 mix_mono(reinterpret_cast<MonoFrameFlt32*>(output)[index]);
                 break;
             case 2:
                 mix_stereo(reinterpret_cast<StereoFrameFlt32*>(output)[index]);
+                break;
+            case 4:
+                mix_surround40(reinterpret_cast<Surround40FrameFlt32*>(output)[index]);
                 break;
             default:
                 break;
@@ -374,6 +405,14 @@ void Player::dump()
         }
     };
 
+    auto write_surround40 = [&](Surround40FrameFlt32& audio_frame) -> void
+    {
+        const int rc = ::write(STDOUT_FILENO, &audio_frame, sizeof(audio_frame));
+        if(rc < 0) {
+            throw std::runtime_error("write() has failed");
+        }
+    };
+
     auto process = [&]() -> void
     {
         _processor.process(nullptr, buffer, length);
@@ -385,6 +424,9 @@ void Player::dump()
                     break;
                 case 2:
                     write_stereo(reinterpret_cast<StereoFrameFlt32*>(buffer)[index]);
+                    break;
+                case 4:
+                    write_surround40(reinterpret_cast<Surround40FrameFlt32*>(buffer)[index]);
                     break;
                 default:
                     break;

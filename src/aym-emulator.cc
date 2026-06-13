@@ -132,6 +132,27 @@ namespace {
 struct StateTraits final
     : public BasicTraits
 {
+    static inline auto construct(State& state, const ChipType type) -> void
+    {
+        switch(state.type = type) {
+            case ChipType::CHIP_AY8910:
+            case ChipType::CHIP_AY8912:
+            case ChipType::CHIP_AY8913:
+                static_cast<void>(::memcpy(state.dac, ay_dac, sizeof(state.dac)));
+                break;
+            case ChipType::CHIP_YM2149:
+                static_cast<void>(::memcpy(state.dac, ym_dac, sizeof(state.dac)));
+                break;
+            default:
+                static_cast<void>(::memcpy(state.dac, ay_dac, sizeof(state.dac)));
+                break;
+        }
+    }
+
+    static inline auto destruct(State& state) -> void
+    {
+    }
+
     static inline auto reset(State& state) -> void
     {
         state.ticks &= 0;
@@ -147,23 +168,6 @@ struct StateTraits final
         }
         for(auto& value : state.dir_port) {
             value &= 0;
-        }
-    }
-
-    static inline auto setup(State& state, const ChipType type) -> void
-    {
-        switch(state.type = type) {
-            case ChipType::CHIP_AY8910:
-            case ChipType::CHIP_AY8912:
-            case ChipType::CHIP_AY8913:
-                static_cast<void>(::memcpy(state.dac, ay_dac, sizeof(state.dac)));
-                break;
-            case ChipType::CHIP_YM2149:
-                static_cast<void>(::memcpy(state.dac, ym_dac, sizeof(state.dac)));
-                break;
-            default:
-                static_cast<void>(::memcpy(state.dac, ay_dac, sizeof(state.dac)));
-                break;
         }
     }
 
@@ -491,9 +495,14 @@ Emulator::Emulator(const ChipType type, Interface& interface)
     , _envelope()
     , _output()
 {
-    StateTraits::setup(_state, type);
+    StateTraits::construct(_state, type);
 
     reset();
+}
+
+Emulator::~Emulator()
+{
+    StateTraits::destruct(_state);
 }
 
 void Emulator::reset()
@@ -552,6 +561,9 @@ void Emulator::clock()
         if(has_noise != 0) {
             output |= sig_noise;
         }
+        if((has_sound == 0) && (has_noise == 0)) {
+            output = +1;
+        }
 
         return static_cast<float>(output) * _state.dac[amplitude];
     };
@@ -582,17 +594,17 @@ void Emulator::clock()
     return update();
 }
 
-uint8_t Emulator::get_index(uint8_t index)
+auto Emulator::get_index(uint8_t index) -> uint8_t
 {
     return (index = _state.index);
 }
 
-uint8_t Emulator::set_index(uint8_t index)
+auto Emulator::set_index(uint8_t index) -> uint8_t
 {
     return (_state.index = index);
 }
 
-uint8_t Emulator::get_value(uint8_t value)
+auto Emulator::get_value(uint8_t value) -> uint8_t
 {
     const auto index = _state.index;
     auto&      array = _state.array[index & 0x0f];
@@ -652,7 +664,7 @@ uint8_t Emulator::get_value(uint8_t value)
     return value;
 }
 
-uint8_t Emulator::set_value(uint8_t value)
+auto Emulator::set_value(uint8_t value) -> uint8_t
 {
     const auto index = _state.index;
     auto&      array = _state.array[index & 0x0f];

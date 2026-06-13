@@ -71,11 +71,18 @@ private: // private types
         uint32_t clock;
     };
 
+    struct Audio
+    {
+        float dcb_input[3];
+        float dcb_output[3];
+    };
+
 private: // private data
     ym::Archive _archive;
     Emulator    _emulator;
     Music       _music;
     Sound       _sound;
+    Audio       _audio;
 };
 
 }

@@ -23,8 +23,9 @@
 
 namespace aym {
 
-class Emulator;
-class Interface;
+struct State;
+class  Emulator;
+class  Interface;
 
 }
 
@@ -141,25 +142,34 @@ class Emulator
 public: // public interface
     Emulator(const ChipType type, Interface& interface);
 
+    Emulator(Emulator&&) = delete;
+
     Emulator(const Emulator&) = delete;
+
+    Emulator& operator=(Emulator&&) = delete;
 
     Emulator& operator=(const Emulator&) = delete;
 
-    virtual ~Emulator() = default;
+    virtual ~Emulator();
 
-    void reset();
+    auto reset() -> void;
 
-    void clock();
+    auto clock() -> void;
 
-    uint8_t get_index(uint8_t index = 0xff);
+    auto get_index(uint8_t index) -> uint8_t;
 
-    uint8_t set_index(uint8_t index = 0xff);
+    auto set_index(uint8_t index) -> uint8_t;
 
-    uint8_t get_value(uint8_t value = 0xff);
+    auto get_value(uint8_t value) -> uint8_t;
 
-    uint8_t set_value(uint8_t value = 0xff);
+    auto set_value(uint8_t value) -> uint8_t;
 
-    const Output& get_output() const
+    auto operator->() -> State*
+    {
+        return &_state;
+    }
+
+    auto get_output() const -> const Output&
     {
         return _output;
     }
@@ -192,13 +202,13 @@ public: // public interface
 
     virtual ~Interface() = default;
 
-    virtual uint8_t aym_port_a_rd(Emulator& emulator, uint8_t data) = 0;
+    virtual auto aym_port_a_rd(Emulator& emulator, uint8_t data) -> uint8_t = 0;
 
-    virtual uint8_t aym_port_a_wr(Emulator& emulator, uint8_t data) = 0;
+    virtual auto aym_port_a_wr(Emulator& emulator, uint8_t data) -> uint8_t = 0;
 
-    virtual uint8_t aym_port_b_rd(Emulator& emulator, uint8_t data) = 0;
+    virtual auto aym_port_b_rd(Emulator& emulator, uint8_t data) -> uint8_t = 0;
 
-    virtual uint8_t aym_port_b_wr(Emulator& emulator, uint8_t data) = 0;
+    virtual auto aym_port_b_wr(Emulator& emulator, uint8_t data) -> uint8_t = 0;
 };
 
 }
