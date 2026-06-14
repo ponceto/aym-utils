@@ -73,8 +73,9 @@ private: // private types
 
     struct Audio
     {
-        float dcb_input[3];
-        float dcb_output[3];
+        float    volume        = 1.0f;
+        float    dcb_input[2]  = {};
+        float    dcb_output[2] = {};
     };
 
 private: // private data

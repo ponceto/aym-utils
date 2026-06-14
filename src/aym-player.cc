@@ -55,7 +55,7 @@ void PlayerProcessor::process(const void* input, void* output, const uint32_t co
 {
     const auto  channels   = _device->playback.channels;
     const auto  samplerate = _device->sampleRate;
-    const auto& psg        = _emulator.get_output();
+    const auto& psg_output = _emulator.get_output();
 
     auto set_register = [&](const uint8_t index, const uint8_t value) -> void
     {
@@ -113,58 +113,75 @@ void PlayerProcessor::process(const void* input, void* output, const uint32_t co
         }
     };
 
+    auto dc_block = [&](const int stream, const float input) -> float
+    {
+        constexpr float attenuation = 0.999f;
+        const float output = (input - _audio.dcb_input[stream]) + (attenuation * _audio.dcb_output[stream]);
+        _audio.dcb_input[stream]  = input;
+        _audio.dcb_output[stream] = output;
+        return output;
+    };
+
+    auto clamp = [&](float value) -> float
+    {
+        if(value < -1.0f) {
+            value = -1.0f;
+        }
+        if(value > +1.0f) {
+            value = +1.0f;
+        }
+        return value;
+    };
+
     auto mix_mono = [&](MonoFrameFlt32& audio_frame) -> void
     {
-        const float mono = (_audio.dcb_output[0] * 1.00f)
-                         + (_audio.dcb_output[1] * 1.00f)
-                         + (_audio.dcb_output[2] * 1.00f)
+        const float mono = (psg_output.channel0 * 1.00f)
+                         + (psg_output.channel1 * 1.00f)
+                         + (psg_output.channel2 * 1.00f)
                          ;
-        audio_frame.mono = (mono / 3.0f);
+
+        audio_frame.mono = clamp(dc_block(0, mono / 3.0f) * _audio.volume);
     };
 
     auto mix_stereo = [&](StereoFrameFlt32& audio_frame) -> void
     {
-        const float left  = (_audio.dcb_output[0] * 0.75f)
-                          + (_audio.dcb_output[1] * 0.50f)
-                          + (_audio.dcb_output[2] * 0.25f)
+        const float left  = (psg_output.channel0 * 0.75f)
+                          + (psg_output.channel1 * 0.50f)
+                          + (psg_output.channel2 * 0.25f)
                           ;
-        const float right = (_audio.dcb_output[0] * 0.25f)
-                          + (_audio.dcb_output[1] * 0.50f)
-                          + (_audio.dcb_output[2] * 0.75f)
+
+        const float right = (psg_output.channel0 * 0.25f)
+                          + (psg_output.channel1 * 0.50f)
+                          + (psg_output.channel2 * 0.75f)
                           ;
-        audio_frame.left  = (left  / 1.5f);
-        audio_frame.right = (right / 1.5f);
+
+        audio_frame.left  = clamp(dc_block(0, left  / 1.5f) * _audio.volume);
+        audio_frame.right = clamp(dc_block(1, right / 1.5f) * _audio.volume);
     };
 
     auto mix_surround40 = [&](Surround40FrameFlt32& audio_frame) -> void
     {
-        const float left  = (_audio.dcb_output[0] * 0.75f)
-                          + (_audio.dcb_output[1] * 0.50f)
-                          + (_audio.dcb_output[2] * 0.25f)
+        const float left  = (psg_output.channel0 * 0.75f)
+                          + (psg_output.channel1 * 0.50f)
+                          + (psg_output.channel2 * 0.25f)
                           ;
-        const float right = (_audio.dcb_output[0] * 0.25f)
-                          + (_audio.dcb_output[1] * 0.50f)
-                          + (_audio.dcb_output[2] * 0.75f)
-                          ;
-        audio_frame.front_left  = (left  / 1.5f);
-        audio_frame.front_right = (right / 1.5f);
-        audio_frame.back_left   = (left  / 1.5f);
-        audio_frame.back_right  = (right / 1.5f);
-    };
 
-    auto dc_block = [&](const int channel, const float input) -> void
-    {
-        constexpr float attenuation = 0.999f;
-        const float output = (input - _audio.dcb_input[channel]) + (attenuation * _audio.dcb_output[channel]);
-        _audio.dcb_input[channel]  = input;
-        _audio.dcb_output[channel] = output;
+        const float right = (psg_output.channel0 * 0.25f)
+                          + (psg_output.channel1 * 0.50f)
+                          + (psg_output.channel2 * 0.75f)
+                          ;
+
+        const float out_l = clamp(dc_block(0, left  / 1.5f) * _audio.volume);
+        const float out_r = clamp(dc_block(1, right / 1.5f) * _audio.volume);
+
+        audio_frame.front_left  = out_l;
+        audio_frame.front_right = out_r;
+        audio_frame.back_left   = out_l;
+        audio_frame.back_right  = out_r;
     };
 
     auto mix = [&](const int index) -> void
     {
-        dc_block(0, psg.channel0);
-        dc_block(1, psg.channel1);
-        dc_block(2, psg.channel2);
         switch(channels) {
             case 1:
                 mix_mono(reinterpret_cast<MonoFrameFlt32*>(output)[index]);
